@@ -23,7 +23,7 @@ CATSplit_parallel <- function(otu_table, taxonomy_table, meta_table, tree_data,
   # Parallel
   results <- foreach(rep = 1:nReps, .combine = 'cbind',
                      .packages = c("ape", "vegan", "GUniFrac", "doParallel"),
-                     .export = c("computeR2", "compDist", "analys")) %dopar% {
+                     .export = c("computeR2", "compDist", "analys", "find_tau")) %dopar% {
                        ## Data Splitting
                        data1_ind <- sample(colnames(otu_table), ncol(otu_table)/2, replace = FALSE)
                        data2_ind <- setdiff(colnames(otu_table), data1_ind)
@@ -43,8 +43,10 @@ CATSplit_parallel <- function(otu_table, taxonomy_table, meta_table, tree_data,
 
                        M <- sign(beta1 * beta2) * (abs(beta1) * abs(beta2))
 
+                       # tau <- find_tau(M, target_fdr = 0.05)
+                       # M_selected <- M[M > tau]
+                       
                        selected_index <- analys(M, abs(M), qval_bound)
-
                        M_selected <- M[selected_index]
 
                        inclusion_rep <- ifelse(inclusion_table$feature %in% names(M_selected), 1, 0)
