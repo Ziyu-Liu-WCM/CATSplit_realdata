@@ -1,0 +1,80 @@
+---
+title: "Untitled"
+output: html_document
+date: "2024-10-23"
+---
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ape)
+library(GUniFrac)
+library(MiRKAT)
+library(vegan)
+library(glmnet)
+library(parallel)
+library(doParallel)
+library(phyloseq)
+
+## Read files
+source("helper_function.R")
+source("preprocess.R")
+source("Split_fun.R")
+source("DS_Mann_fun.R")
+```
+
+
+```{r}
+if(file.exists("result.RData")) load("result.RData")
+Man_selected <- result$Man_selected
+DSBin_selected <- result$DSBin_selected
+CAT_selected <- result$CAT_selected
+```
+
+
+```{r}
+ps <- phyloseq(otu_table(otu_table, taxa_are_rows = TRUE), 
+                        tax_table(as.matrix(taxonomy_table)),
+                        sample_data(meta_table), 
+                        phy_tree(tree_data))
+ps_genus <- tax_glom(ps, "genus")
+
+otu_table_genus <- otu_table(ps_genus)
+k <- as.data.frame(otu_table_genus)
+
+
+ps_rel_abund <- transform_sample_counts(ps_genus, function(x) x / sum(x))
+```
+
+
+
+### DS
+
+```{r, fig.height=14, fig.width=20}
+otu_melt <- psmelt(ps_rel_abund)
+
+# Add the differential genera highlight information
+otu_melt$highlight <- ifelse(otu_melt$genus %in% taxonomy_table[taxonomy_table$taxa_to_genus %in% DSBin_selected,]$genus, otu_melt$genus, "Other")
+
+# Plot the bar plot, coloring by genus but emphasizing differential genera
+ggplot(otu_melt, aes(x = Sample, y = Abundance, fill = highlight)) + 
+  geom_bar(stat = "identity", position = "stack") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Composition of OTU Table with Differential Genera Highlighted",
+       x = "Sample", y = "Relative Abundance")
+
+```
+
+```{r, fig.height=14, fig.width=20}
+otu_melt2 <- psmelt(ps_rel_abund)
+
+# Add the differential genera highlight information
+otu_melt2$highlight <- ifelse(otu_melt2$genus %in% taxonomy_table[taxonomy_table$taxa_to_genus %in% CAT_selected,]$genus, otu_melt2$genus, "Other")
+
+# Plot the bar plot, coloring by genus but emphasizing differential genera
+ggplot(otu_melt2, aes(x = Sample, y = Abundance, fill = highlight)) + 
+  geom_bar(stat = "identity", position = "stack") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Composition of OTU Table with Differential Genera Highlighted",
+       x = "Sample", y = "Relative Abundance")
+```
+

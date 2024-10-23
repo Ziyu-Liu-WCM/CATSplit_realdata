@@ -28,7 +28,7 @@ compDist<-function(otutable,metric,tree=NULL){
 
 computeR2 <- function(testList, otutable, taxonomy, metaData, tree, metric, parallel, nCore){
   distMat <- suppressMessages(compDist(otutable, metric, tree))
-  distResult <- adonis2(distMat ~ metaData[,"BinOutcomes"], permutations = 1)
+  distResult <- adonis2(distMat ~ metaData[,"BinOutcomes"], permutations = 500)
   origR2 <- distResult$R2[1]
   
   ## Remove one taxonomy feature and compute R^2
